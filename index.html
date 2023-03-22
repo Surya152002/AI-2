@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Timetable Generator</title>
+</head>
+<body>
+  <h1>Timetable Generator</h1>
+  <form>
+    <label for="classes">Classes:</label>
+    <input type="text" id="classes" name="classes"><br><br>
+    <label for="teachers">Teachers:</label>
+    <input type="text" id="teachers" name="teachers"><br><br>
+    <label for="rooms">Rooms:</label>
+    <input type="text" id="rooms" name="rooms"><br><br>
+    <label for="subjects">Subjects:</label>
+    <input type="text" id="subjects" name="subjects"><br><br>
+    <label for="slots">Slots:</label>
+    <input type="text" id="slots" name="slots"><br><br>
+    <input type="button" value="Generate Timetable" onclick="generateTimetable()">
+  </form>
+  <div id="schedule"></div>
+  <script>
+    // Function to generate timetable using TSP
+    function generateTimetable() {
+      const classesArr = document.getElementById("classes").value.split(",");
+      const teachersArr = document.getElementById("teachers").value.split(",");
+      const roomsArr = document.getElementById("rooms").value.split(",");
+      const subjectsArr = document.getElementById("subjects").value.split(",");
+      const slots = parseInt(document.getElementById("slots").value);
+
+      // Validate inputs
+      if (!classesArr.length || !teachersArr.length || !roomsArr.length || !subjectsArr.length || !slots) {
+        document.getElementById("schedule").innerHTML = "Invalid input!";
+        return;
+      }
+
+      // Create a dictionary to map room names to indices
+      const roomIndices = {};
+      for (let i = 0; i < roomsArr.length; i++) {
+        roomIndices[roomsArr[i]] = i;
+      }
+
+        // Create the graph and weights arrays based on the input arrays
+  const n = classesArr.length;
+  const graph = new Array(n).fill(null).map(() => new Array(n).fill(0));
+  const weights = new Array(n).fill(null).map(() => new Array(n).fill(0));
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (i !== j) {
+        graph[i][j] = 1;
+        weights[i][j] = Math.floor(Math.random() * 10) + 1; // Assign a random weight between 1 and 10
+      }
+    }
+  }
+
+  // Find the shortest Hamiltonian path through the graph
+  const path = tsp();
+
+  // Generate the schedule based on the TSP path
+  const schedule = generateSchedule(path, classesArr, teachersArr, roomsArr);
+
+  // Display the schedule on the page
+  const scheduleTable = document.createElement("table");
+  const headerRow = scheduleTable.insertRow();
+  headerRow.innerHTML = "<th>Time</th><th>Class</th><th>Teacher</th><th>Room</th>";
+
+  for (let i = 0; i < schedule.length; i++) {
+    const row = scheduleTable.insertRow();
+    row.innerHTML = `<td>${schedule[i].time}</td><td>${schedule[i].class_}</td><td>${schedule[i].teacher}</td><td>${schedule[i].room}</td>`;
+  }
+
+  document.getElementById("schedule").innerHTML = "";
+  document.getElementById("schedule").appendChild(scheduleTable);
+}
+</script>
+</body>
+</html>
