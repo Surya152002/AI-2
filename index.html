@@ -14,6 +14,8 @@
     <input type="text" id="rooms" name="rooms"><br><br>
     <label for="subjects">Subjects:</label>
     <input type="text" id="subjects" name="subjects"><br><br>
+    <input type="hidden" id="class-duration" value="50">
+    <input type="hidden" id="break-duration" value="5">
     <label for="slots">Slots:</label>
     <input type="text" id="slots" name="slots"><br><br>
     <input type="button" value="Generate Timetable" onclick="generateTimetable()">
@@ -36,6 +38,15 @@
       [2, 1, 3, 0, 2],
       [3, 3, 1, 2, 0]
     ];
+
+    function calculateEndTime(startTime, duration) {
+      let hours = Math.floor((startTime + duration) / 60);
+      let minutes = (startTime + duration) % 60;
+      if (hours > 12) {
+        hours -= 12;
+      }
+      return `${hours}:${minutes < 10 ? "0" : ""}${minutes}${startTime < 720 ? "am" : "pm"}`;
+    }
 
     // Function to find the shortest Hamiltonian path through the graph
     function tsp() {
@@ -123,18 +134,25 @@
   const schedule = generateSchedule(path, classesArr, teachersArr, roomsArr);
 
   // Display the schedule on the page
-  const scheduleTable = document.createElement("table");
+const scheduleTable = document.createElement("table");
   const headerRow = scheduleTable.insertRow();
   headerRow.innerHTML = "<th>Time</th><th>Class</th><th>Teacher</th><th>Room</th>";
+  let time = 8;
 
   for (let i = 0; i < schedule.length; i++) {
     const row = scheduleTable.insertRow();
-    row.innerHTML = `<td>${schedule[i].time}</td><td>${schedule[i].class_}</td><td>${schedule[i].teacher}</td><td>${schedule[i].room}</td>`;
+    row.innerHTML = `<td>${time}:00am - ${time+1}:00am</td><td>${schedule[i].class_}</td><td>${schedule[i].teacher}</td><td>${schedule[i].room}</td>`;
+    time++;
+
+    if (i < schedule.length - 1 && time % slots === 0) {
+      time += 5; // Add 5 minute break between classes
+    }
   }
 
   document.getElementById("schedule").innerHTML = "";
   document.getElementById("schedule").appendChild(scheduleTable);
 }
+    
 </script>
 </body>
 </html>
