@@ -14,6 +14,7 @@
     <input type="text" id="rooms" name="rooms"><br><br>
     <label for="subjects">Subjects:</label>
     <input type="text" id="subjects" name="subjects"><br><br>
+
     <input type="hidden" id="class-duration" value="50">
     <input type="hidden" id="break-duration" value="5">
     <label for="slots">Slots:</label>
@@ -71,14 +72,18 @@ function generateTimetable() {
   const breakDuration = Number(document.getElementById("break-duration").value);
   const slots = Number(document.getElementById("slots").value);
 
-  // Generate the graph
   const n = classes.length;
-  for (let i = 0; i < n; i++) {
-    graph.push([]);
-    for (let j = 0; j < n; j++) {
-      // Compute the weight for the edge
-      let weight = 0;
-      if (i !== j) {
+for (let i = 0; i < n; i++) {
+  graph.push([]);
+  for (let j = 0; j < n; j++) {
+    // Compute the weight for the edge
+    let weight = 0;
+    if (i !== j) {
+      // Check if the teacher is available to teach the class
+      const teacherAvailability = teachers[j].split("/");
+      if (!teacherAvailability.includes(classes[i])) {
+        weight = Infinity;
+      } else {
         // Compute the number of breaks needed between the two classes
         const numBreaks = Math.ceil(classDuration / breakDuration) - 1;
 
@@ -95,11 +100,13 @@ function generateTimetable() {
         // Compute the weight of the edge
         weight = nextStartTime - endTime;
       }
-
-      graph[i][j] = weight;
-      weights.push(weight);
     }
+
+    graph[i][j] = weight;
+    weights.push(weight);
   }
+}
+
 
   // Find the shortest Hamiltonian path through the graph
   const path = tsp();
