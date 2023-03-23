@@ -49,111 +49,80 @@
         let minWeight = Infinity;
         let nextNode = -1;
 
-        for (let j = 0; j < n; j++) {
-          if (!visited[j] && weights[path[i - 1]][j] < minWeight) {
-            minWeight = weights[path[i - 1]][j];
-            nextNode = j;
-          }
-        }
-
-        visited[nextNode] = true;
-        path[i] = nextNode;
+            for (let j = 0; j < n; j++) {
+      if (!visited[j] && weights[path[i-1]][j] < minWeight) {
+        minWeight = weights[path[i-1]][j];
+        next = j;
       }
-
-      // Add the last edge to complete the cycle
-      path[n-1] = path[0];
-
-      return path;
     }
-
-    // Generate the schedule based on the TSP path
-    function generateSchedule(path, classes, teachers, rooms, subjectsArr) {
-  const schedule = [];
-  let time = 8;
-
-  for (let i = 0; i < path.length - 1; i++) {
-    const startTime = time * 60;
-    const endTime = startTime + 50 + (i < path.length - 2 ? 5 : 0); // add 5 minutes between classes
-    if (endTime <= 1230) { // school working hours till 7:30 pm
-      const startTimeStr = calculateEndTime(startTime, 0);
-      const endTimeStr = calculateEndTime(endTime, 0);
-      const class_ = classes[path[i]];
-      const teacher = teachers[path[i]];
-      const room = rooms[path[i]];
-      const subject = subjectsArr[path[i]];
-
-      schedule.push({time: `${startTimeStr} - ${endTimeStr}`, class_, teacher, room, subject});
-      time += 1;
-    } else {
-      break;
-    }
+    path[i] = next;
+    visited[next] = true;
   }
 
-  return schedule;
+  return path;
 }
 
+function generateTimetable() {
+  const classes = document.getElementById("classes").value.split(",");
+  const teachers = document.getElementById("teachers").value.split(",");
+  const rooms = document.getElementById("rooms").value.split(",");
+  const subjects = document.getElementById("subjects").value.split(",");
+  const classDuration = Number(document.getElementById("class-duration").value);
+  const breakDuration = Number(document.getElementById("break-duration").value);
+  const slots = Number(document.getElementById("slots").value);
 
-    // Function to generate timetable using TSP
-    function generateTimetable() {
-      const classesArr = document.getElementById("classes").value.split(",");
-      const teachersArr = document.getElementById("teachers").value.split(",");
-      const roomsArr = document.getElementById("rooms").value.split(",");
-      const subjectsArr = document.getElementById("subjects").value.split(",");
-     
-
-      const slots = parseInt(document.getElementById("slots").value);
-
-      // Validate inputs
-      if (!classesArr.length || !teachersArr.length || !roomsArr.length || !subjectsArr.length || !slots) {
-        document.getElementById("schedule").innerHTML = "Invalid input!";
-        return;
-      }
-
-      // Create a dictionary to map room names to indices
-      const roomIndices = {};
-      for (let i = 0; i < roomsArr.length; i++) {
-        roomIndices[roomsArr[i]] = i;
-      }
-
-        // Create the graph and weights arrays based on the input arrays
-  const n = classesArr.length;
-  const graph = new Array(n).fill(null).map(() => new Array(n).fill(0));
-  const weights = new Array(n).fill(null).map(() => new Array(n).fill(0));
-
+  // Generate the graph
+  const n = classes.length;
   for (let i = 0; i < n; i++) {
+    graph.push([]);
     for (let j = 0; j < n; j++) {
+      // Compute the weight for the edge
+      let weight = 0;
       if (i !== j) {
-        graph[i][j] = 1;
-        weights[i][j] = Math.floor(Math.random() * 10) + 1; // Assign a random weight between 1 and 10
+        // Compute the number of breaks needed between the two classes
+        const numBreaks = Math.ceil(classDuration / breakDuration) - 1;
+
+        // Compute the end time of the first class
+        const startTime = 9 * 60 + j * classDuration + j * breakDuration;
+        const endTime = startTime + classDuration + numBreaks * breakDuration;
+
+        // Compute the start time of the second class
+        const nextStartTime = endTime;
+
+        // Compute the end time of the second class
+        const nextEndTime = nextStartTime + classDuration;
+
+        // Compute the weight of the edge
+        weight = nextStartTime - endTime;
       }
+
+      graph[i][j] = weight;
+      weights.push(weight);
     }
   }
 
   // Find the shortest Hamiltonian path through the graph
   const path = tsp();
 
-  // Generate the schedule based on the TSP path
-  const schedule = generateSchedule(path, classesArr, teachersArr, roomsArr);
-
-  // Display the schedule on the page
-const scheduleTable = document.createElement("table");
-  const headerRow = scheduleTable.insertRow();
-  headerRow.innerHTML = "<th>Time</th><th>Class</th><th>Teacher</th><th>Room</th>";
-  let time = 8;
-
-  for (let i = 0; i < schedule.length; i++) {
-    const row = scheduleTable.insertRow();
-    row.innerHTML = `<td>${time}:00am - ${time+1}:00am</td><td>${schedule[i].class_}</td><td>${schedule[i].teacher}</td><td>${schedule[i].room}</td>`;
-    time++;
-
-    if (i < schedule.length - 1 && time % slots === 0) {
-      time += 5; // Add 5 minute break between classes
-    }
+  // Generate the timetable
+  let table = "<table>";
+  table += "<tr><th>Slot</th><th>Class</th><th>Teacher</th><th>Room</th><th>Subject</th><th>Start Time</th><th>End Time</th></tr>";
+  for (let i = 0; i < slots; i++) {
+    const j = path[i % n];
+    const className = classes[j];
+    const teacherName = teachers[j];
+    const roomName = rooms[j];
+    const subjectName = subjects[j];
+    const numBreaks = Math.ceil(classDuration / breakDuration) - 1;
+    const startTime = 9 * 60 + Math.floor(i / n) * (classDuration + numBreaks * breakDuration) + j * classDuration + Math.min(j, i % n) * breakDuration;
+    const endTime = calculateEndTime(startTime, classDuration);
+    const startTimeString = calculateEndTime(startTime, 0);
+    table += `<tr><td>${i + 1}</td><td>${className}</td><td>${teacherName}</td><td>${roomName}</td><td>${subjectName}</td><td>${startTimeString}</td><td>${endTime}</td></tr>`;
   }
-
-  document.getElementById("schedule").innerHTML = "";
-  document.getElementById("schedule").appendChild(scheduleTable);
+  table += "</table>";
+  document.getElementById("schedule").innerHTML = table;
 }
+
     
 </script>
 </body>
