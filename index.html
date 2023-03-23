@@ -111,6 +111,8 @@
       const teachersArr = document.getElementById("teachers").value.split(",");
       const roomsArr = document.getElementById("rooms").value.split(",");
       const subjectsArr = document.getElementById("subjects").value.split(",");
+      const path = tsp();
+
       const schedule = generateSchedule(path, classesArr, teachersArr, roomsArr, subjectsArr);
 
       const slots = parseInt(document.getElementById("slots").value);
