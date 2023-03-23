@@ -80,19 +80,30 @@
 
     // Generate the schedule based on the TSP path
     function generateSchedule(path, classes, teachers, rooms) {
-      const schedule = [];
+  const schedule = [];
+  let time = 8;
 
-      for (let i = 0; i < path.length - 1; i++) {
-        const time = `${i + 8}:00am - ${i + 9}:00am`;
-        const class_ = classes[path[i]];
-        const teacher = teachers[path[i]];
-        const room = rooms[path[i]];
+  for (let i = 0; i < path.length - 1; i++) {
+    const startTime = time * 60;
+    const endTime = startTime + 50; // class duration is 50 minutes
+    if (endTime <= 1230) { // school working hours till 7:30 pm
+      const startTimeStr = calculateEndTime(startTime, 0);
+      const endTimeStr = calculateEndTime(startTime, 50);
+      const class_ = classes[path[i]];
+      const teacher = teachers[path[i]];
+      const room = rooms[path[i]];
+      const subject = subjectsArr[path[i]];
 
-        schedule.push({time, class_, teacher, room});
-      }
-
-      return schedule;
+      schedule.push({time: `${startTimeStr} - ${endTimeStr}`, class_, teacher, room, subject});
+      time += 1;
+    } else {
+      break;
     }
+  }
+
+  return schedule;
+}
+
     // Function to generate timetable using TSP
     function generateTimetable() {
       const classesArr = document.getElementById("classes").value.split(",");
